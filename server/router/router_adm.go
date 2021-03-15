@@ -1,13 +1,12 @@
 package router
 
 import (
-	"blog/control"
-
-	"github.com/labstack/echo/v4"
+	"ginblog/control"
+	"github.com/gin-gonic/gin"
 )
 
 // admRouter 登录访问
-func admRouter(adm *echo.Group) {
+func admRouter(adm  gin.IRouter) {
 	adm.GET(`/sys`, control.Sys)                      // 服务器信息
 	adm.GET(`/collect`, control.Collect)              // 统计信息
 	adm.GET(`/auth`, control.UserAuth)                // 获取当前登陆信息

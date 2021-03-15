@@ -1,39 +1,44 @@
 package control
 
 import (
-	"blog/model"
-
-	"github.com/labstack/echo/v4"
+	"ginblog/model"
+	"github.com/gin-gonic/gin"
 	"github.com/zxysilent/utils"
 )
 
 // OptsGet 获取某个配置项
-func OptsGet(ctx echo.Context) error {
+func OptsGet(ctx *gin.Context)  {
 	key := ctx.Param("key")
 	if key == "" {
-		return ctx.JSON(utils.ErrIpt(`请填写key值`))
+		 ctx.JSON(utils.ErrIpt(`请填写key值`))
+		return
 	}
 	if val, ok := model.OptsGet(key); ok {
-		return ctx.JSON(utils.Succ(``, val))
+		 ctx.JSON(utils.Succ(``, val))
+		return
 	}
-	return ctx.JSON(utils.ErrIpt(`错误的key值`))
+	 ctx.JSON(utils.ErrIpt(`错误的key值`))
+	return
 }
 
 // OptsEdit 编辑某个配置项
-func OptsEdit(ctx echo.Context) error {
+func OptsEdit(ctx *gin.Context)  {
 	ipt := &model.Opts{}
 	err := ctx.Bind(ipt)
 	if err != nil {
-		return ctx.JSON(utils.ErrIpt(`数据输入错误,请重试`, err.Error()))
+		 ctx.JSON(utils.ErrIpt(`数据输入错误,请重试`, err.Error()))
+		return
 	}
 	if !model.OptsEdit(ipt) {
-		return ctx.JSON(utils.Fail(`配置项修改失败`))
+		 ctx.JSON(utils.Fail(`配置项修改失败`))
+		return
 	}
-	return ctx.JSON(utils.Succ(`配置项修改成功`))
+	 ctx.JSON(utils.Succ(`配置项修改成功`))
+	return
 }
 
 // OptsBase 基本配置项目
-func OptsBase(ctx echo.Context) error {
+func OptsBase(ctx *gin.Context)  {
 	// ipt := &model.Opts{}
 	// err := ctx.Bind(ipt)
 	// if err != nil {
@@ -45,5 +50,6 @@ func OptsBase(ctx echo.Context) error {
 	mp := model.MapOpts
 	// delete(mp, "analytic")
 	// delete(mp, "comment")
-	return ctx.JSON(utils.Succ(`基本配置项目`, mp))
+	 ctx.JSON(utils.Succ(`基本配置项目`, mp))
+	return
 }

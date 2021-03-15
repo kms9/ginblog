@@ -1,7 +1,7 @@
 package conf
 
 import (
-	"blog/libs"
+	"ginblog/libs"
 	"fmt"
 
 	"github.com/BurntSushi/toml"

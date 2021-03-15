@@ -1,11 +1,11 @@
 package process
 
 import (
-	"blog/libs"
+	"ginblog/libs"
 	"fmt"
 	"strconv"
 	"time"
-	"blog/internal/wx"
+	"ginblog/internal/wx"
 )
 
 //func SendWxTimes()  {

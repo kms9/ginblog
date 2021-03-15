@@ -20,7 +20,7 @@ secret = "secret"
 host = "127.0.0.1"
 port = 3306
 user = "root"
-passwd = "mysql123456"
+passwd = "123456"
 dbname = "goblog"
 params = "charset=utf8&parseTime=true"
 

@@ -1,56 +1,64 @@
 package control
 
 import (
-	"blog/model"
+	"ginblog/model"
+	"github.com/gin-gonic/gin"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/labstack/echo/v4"
-	"github.com/zxysilent/utils"
+	"ginblog/utils"
 )
 
 // PostGet 一个
 // id int
-func PostGet(ctx echo.Context) error {
+func PostGet(ctx *gin.Context)  {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
-		return ctx.JSON(utils.ErrIpt(`数据输入错误,请重试`, err.Error()))
+		 ctx.JSON(utils.ErrIpt(`数据输入错误,请重试`, err.Error()))
+		return
 	}
 	mod, has := model.PostGet(id)
 	if !has {
-		return ctx.JSON(utils.ErrOpt(`未查询信息`))
+		 ctx.JSON(utils.ErrOpt(`未查询信息`))
+		return
 	}
-	return ctx.JSON(utils.Succ(`信息`, mod))
+	 ctx.JSON(utils.Succ(`信息`, mod))
+	return
 }
 
 // PostPageAll 页面列表
-func PostPageAll(ctx echo.Context) error {
+func PostPageAll(ctx *gin.Context)  {
 	mods, err := model.PostPageAll()
 	if err != nil {
-		return ctx.JSON(utils.ErrOpt(`未查询到页面信息`, err.Error()))
+		 ctx.JSON(utils.ErrOpt(`未查询到页面信息`, err.Error()))
+		return
 	}
 	if len(mods) < 1 {
-		return ctx.JSON(utils.ErrOpt(`未查询到页面信息`, "len"))
+		 ctx.JSON(utils.ErrOpt(`未查询到页面信息`, "len"))
+		return
 	}
-	return ctx.JSON(utils.Succ(`页面信息`, mods))
+	 ctx.JSON(utils.Succ(`页面信息`, mods))
+	return
 }
 
 // PostTagGet 通过文章id 获取 标签ids
-func PostTagGet(ctx echo.Context) error {
+func PostTagGet(ctx *gin.Context)  {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
-		return ctx.JSON(utils.ErrIpt(`数据输入错误,请重试`, err.Error()))
+		 ctx.JSON(utils.ErrIpt(`数据输入错误,请重试`, err.Error()))
+		return
 	}
 	mods := model.PostTagGet(id)
 	if mods == nil {
-		return ctx.JSON(utils.ErrOpt(`未查询到标签信息`))
+		 ctx.JSON(utils.ErrOpt(`未查询到标签信息`))
+		return
 	}
-	return ctx.JSON(utils.Succ(`标签ids`, mods))
+	 ctx.JSON(utils.Succ(`标签ids`, mods))
+	return
 }
 
 // PostOpts 文章操作
-func PostOpts(ctx echo.Context) error {
+func PostOpts(ctx *gin.Context)  {
 	ipt := &struct {
 		Post model.Post `json:"post" form:"post"` // 文章信息
 		Type int        `json:"type" form:"type"` // 0 文章 1 页面
@@ -59,10 +67,12 @@ func PostOpts(ctx echo.Context) error {
 	}{}
 	err := ctx.Bind(ipt)
 	if err != nil {
-		return ctx.JSON(utils.ErrIpt(`数据输入错误,请重试`, err.Error()))
+		 ctx.JSON(utils.ErrIpt(`数据输入错误,请重试`, err.Error()))
+		return
 	}
 	if !ipt.Edit && model.PostExist(ipt.Post.Path) {
-		return ctx.JSON(utils.ErrIpt(`当前访问路径已经存在,请重新输入`))
+		 ctx.JSON(utils.ErrIpt(`当前访问路径已经存在,请重新输入`))
+		return
 	}
 	// 同步类型
 	ipt.Post.Type = ipt.Type
@@ -108,14 +118,18 @@ func PostOpts(ctx echo.Context) error {
 				model.PostTagDrops(ipt.Post.Id, del)
 				// 添加标签
 				model.TagPostAdds(&tagAdds)
-				return ctx.JSON(utils.Succ(`文章修改成功`))
+				 ctx.JSON(utils.Succ(`文章修改成功`))
+				return
 			}
-			return ctx.JSON(utils.Succ(`页面修改成功`))
+			 ctx.JSON(utils.Succ(`页面修改成功`))
+			return
 		}
 		if ipt.Type == 0 {
-			return ctx.JSON(utils.Fail(`文章修改失败,请重试`))
+			 ctx.JSON(utils.Fail(`文章修改失败,请重试`))
+			return
 		}
-		return ctx.JSON(utils.Fail(`页面修改失败,请重试`))
+		 ctx.JSON(utils.Fail(`页面修改失败,请重试`))
+		return
 	}
 	// 添加 文章/页面
 	ipt.Post.UpdateTime = time.Now()
@@ -132,14 +146,18 @@ func PostOpts(ctx echo.Context) error {
 				})
 			}
 			model.TagPostAdds(&tagPosts)
-			return ctx.JSON(utils.Succ(`文章添加成功`))
+			 ctx.JSON(utils.Succ(`文章添加成功`))
+			return
 		}
-		return ctx.JSON(utils.Succ(`页面添加成功`))
+		 ctx.JSON(utils.Succ(`页面添加成功`))
+		return
 	}
 	if ipt.Type == 0 {
-		return ctx.JSON(utils.Fail(`文章添加失败,请重试`))
+		 ctx.JSON(utils.Fail(`文章添加失败,请重试`))
+		return
 	}
-	return ctx.JSON(utils.Fail(`页面添加失败,请重试`))
+	 ctx.JSON(utils.Fail(`页面添加失败,请重试`))
+	return
 }
 func similar(a, b string) int {
 	if a[:4] == b[:4] {
@@ -152,17 +170,20 @@ func similar(a, b string) int {
 }
 
 // PostDrop  删除
-func PostDrop(ctx echo.Context) error {
+func PostDrop(ctx *gin.Context)  {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
-		return ctx.JSON(utils.ErrIpt(`数据输入错误,请重试`, err.Error()))
+		 ctx.JSON(utils.ErrIpt(`数据输入错误,请重试`, err.Error()))
+		return
 	}
 	if !model.PostDrop(id) {
-		return ctx.JSON(utils.Fail(`删除失败,请重试`))
+		 ctx.JSON(utils.Fail(`删除失败,请重试`))
+		return
 	}
 	// 删除 文章对应的标签信息
 	model.PostTagDrop(id)
-	return ctx.JSON(utils.Succ(`删除成功`))
+	 ctx.JSON(utils.Succ(`删除成功`))
+	return
 }
 func inOf(goal int, arr []int) bool {
 	for idx := range arr {

@@ -1,35 +1,56 @@
 package main
 
 import (
-	"blog/conf"
-	"blog/internal/wx"
-	"blog/model"
-	"blog/router"
-	"os"
-	"os/signal"
-	"syscall"
-
-	"github.com/zxysilent/logs"
+	"fmt"
+	"ginblog/cache"
+	"ginblog/conf"
+	"ginblog/model"
+	"ginblog/router"
+	"ginblog/services"
+	"ginblog/setup"
+	"github.com/kms9/publicyc"
+	"github.com/kms9/publicyc/pkg/server/ogin"
 )
 
-// @Title Blog’s Api文档
-// @Version 1.0
-// @Description token传递方式包括 [get/post]token 、[header] Authorization=Bearer xxxx
-// @Description 数据传递方式包括 json、formData 推荐使用 json
-// @Description /api/* 公共访问
-// @Description /adm/* 必须传入 token
-// @Host 127.0.0.1:88
-// @BasePath /
+// Engine ..
+type Engine struct {
+	yc.Application
+}
+
+// NewEngine 初始化相关方法
+func NewEngine() *Engine {
+	eng := &Engine{}
+	if err := eng.Start(
+		setup.StartLogger,
+		setup.StartRedis,
+		//setup.StartDB,
+		setup.StartMysqlDB,
+		//setup.StartRequest,
+
+		cache.Init,
+		services.ServiceInit,
+		eng.serveHTTP,
+	); err != nil {
+		//onion_log.Panicf("Engine: %s", err)
+		fmt.Errorf("Engine: %s", err)
+	}
+	return eng
+}
+
+// serveHTTP 启动http
+func (eng *Engine) serveHTTP() error {
+	server := ogin.UseConfig("http").Build()
+	router.StartHttp(server)
+	return eng.Serve(server)
+}
+
 func main() {
-	logs.Info("app initializing")
+
 	conf.Init()
 	model.Init()
-	wx.Init()
-	quit := make(chan os.Signal)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
-	logs.Info("app running")
-	go router.RunApp()
-	<-quit
-	logs.Info("app quitted")
-	logs.Flush()
+
+	eng := NewEngine()
+	if err := eng.Run(); err != nil {
+		fmt.Println(err.Error())
+	}
 }

@@ -1,12 +1,15 @@
 package router
 
 import (
-	"blog/control"
-
-	"github.com/labstack/echo/v4"
+	"ginblog/control"
+	"github.com/gin-gonic/gin"
 )
 
 // wx相关 通用访问
-func wxRouter(api *echo.Group) {
-	api.Any(`/echo`, control.WxApiPost)   // 微信下发验证
+func wxRouter(r  gin.IRouter) {
+	//	api.Any(`/echo`, control.WxApiPost)   // 微信下发验证
+	router := r.Group("/wx")
+	// test 接口
+	router.GET("/test",  control.WxApiPost)
+
 }

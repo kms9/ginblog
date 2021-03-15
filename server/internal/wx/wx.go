@@ -1,7 +1,7 @@
 package wx
 
 import (
-	"blog/model"
+	"ginblog/model"
 	"fmt"
 	"github.com/esap/wechat"
 ) // 微信SDK包

@@ -1,61 +1,72 @@
 package control
 
 import (
-	"blog/model"
+	"ginblog/model"
+	"github.com/gin-gonic/gin"
 	"strconv"
-
-	"github.com/labstack/echo/v4"
-	"github.com/zxysilent/utils"
+	"ginblog/utils"
 )
 
 // TagAll 所有标签
-func TagAll(ctx echo.Context) error {
+func TagAll(ctx *gin.Context)  {
 	mods, err := model.TagAll()
 	if err != nil {
-		return ctx.JSON(utils.ErrOpt(`未查询到标签信息`, err.Error()))
+		 ctx.JSON(utils.ErrOpt(`未查询到标签信息`, err.Error()))
+		return
 	}
 	if len(mods) < 1 {
-		return ctx.JSON(utils.ErrOpt(`未查询到标签信息`, "len"))
+		 ctx.JSON(utils.ErrOpt(`未查询到标签信息`, "len"))
+		return
 	}
-	return ctx.JSON(utils.Succ(`分类信息`, mods))
+	 ctx.JSON(utils.Succ(`分类信息`, mods))
+	return
 }
 
 // TagAdd 添加标签
-func TagAdd(ctx echo.Context) error {
+func TagAdd(ctx *gin.Context)  {
 	ipt := &model.Tag{}
 	err := ctx.Bind(ipt)
 	if err != nil {
-		return ctx.JSON(utils.ErrIpt(`数据输入错误,请重试`, err.Error()))
+		 ctx.JSON(utils.ErrIpt(`数据输入错误,请重试`, err.Error()))
+		return
 	}
 	if !model.TagAdd(ipt) {
-		return ctx.JSON(utils.Fail(`添加标签失败,请重试`))
+		 ctx.JSON(utils.Fail(`添加标签失败,请重试`))
+		return
 	}
-	return ctx.JSON(utils.Succ(`添加标签成功`))
+	 ctx.JSON(utils.Succ(`添加标签成功`))
+	return
 }
 
 // TagEdit 修改标签
-func TagEdit(ctx echo.Context) error {
+func TagEdit(ctx *gin.Context)  {
 	ipt := &model.Tag{}
 	err := ctx.Bind(ipt)
 	if err != nil {
-		return ctx.JSON(utils.ErrIpt(`数据输入错误,请重试`, err.Error()))
+		 ctx.JSON(utils.ErrIpt(`数据输入错误,请重试`, err.Error()))
+		return
 	}
 	if !model.TagEdit(ipt) {
-		return ctx.JSON(utils.Fail(`标签修改失败`))
+		 ctx.JSON(utils.Fail(`标签修改失败`))
+		return
 	}
-	return ctx.JSON(utils.Succ(`标签修改成功`))
+	 ctx.JSON(utils.Succ(`标签修改成功`))
+	return
 }
 
 // TagDrop  删除标签
-func TagDrop(ctx echo.Context) error {
+func TagDrop(ctx *gin.Context)  {
 	id, err := strconv.Atoi(ctx.Param("id"))
 	if err != nil {
-		return ctx.JSON(utils.ErrIpt(`数据输入错误,请重试`, err.Error()))
+		 ctx.JSON(utils.ErrIpt(`数据输入错误,请重试`, err.Error()))
+		return
 	}
 	if !model.TagDrop(id) {
-		return ctx.JSON(utils.Fail(`标签删除失败,请重试`))
+		 ctx.JSON(utils.Fail(`标签删除失败,请重试`))
+		return
 	}
 	// 删除标签相关联的数据
 	model.TagPostDrop(id)
-	return ctx.JSON(utils.Succ(`标签删除成功`))
+	 ctx.JSON(utils.Succ(`标签删除成功`))
+	return
 }

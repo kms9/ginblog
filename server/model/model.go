@@ -1,7 +1,7 @@
 package model
 
 import (
-	"blog/conf"
+	"ginblog/conf"
 	"log"
 	"strings"
 

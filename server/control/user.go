@@ -1,10 +1,10 @@
 package control
 
 import (
-	"blog/model"
-
-	"github.com/labstack/echo/v4"
-	"github.com/zxysilent/utils"
+	"ginblog/model"
+	"github.com/gin-gonic/gin"
+	"ginblog/utils"
+	"strconv"
 )
 
 // UserExist doc
@@ -12,12 +12,14 @@ import (
 // @Summary 判断当前用户账号是否存在
 // @Param num path string true "用户账号"" default('')
 // @Router /user/exist/{num} [get]
-func UserExist(ctx echo.Context) error {
+func UserExist(ctx *gin.Context)  {
 	num := ctx.Param("num")
 	if !model.UserExist(num) {
-		return ctx.JSON(utils.ErrOpt(`当前账号不存在`))
+		ctx.JSON(utils.ErrOpt(`当前账号不存在`))
+		return
 	}
-	return ctx.JSON(utils.Succ(`当前账号存在`))
+	ctx.JSON(utils.Succ(`当前账号存在`))
+	return
 }
 
 // UserAdd doc
@@ -26,7 +28,7 @@ func UserExist(ctx echo.Context) error {
 // @Accept mpfd
 // @Param mod formData {object} true "用户信息mod"
 // @Router /user/add [post]
-// func UserAdd(ctx echo.Context) error {
+// func UserAdd(ctx *gin.Context)  {
 // 	ipt := &struct {
 // 		model.User
 // 		Pass  string   `json:"pass" form:"pass"`
@@ -61,7 +63,7 @@ func UserExist(ctx echo.Context) error {
 // @Param pi query int true "分页页数pi" default(1)
 // @Param ps query int true "分页大小ps" default(6)
 // @Router /user/page/{rl}?pi={pi}&ps={ps}[get]
-// func UserPage(ctx echo.Context) error {
+// func UserPage(ctx *gin.Context)  {
 // 	auth := ctx.Get("auth").(*model.JwtClaims)
 // 	rl, err := ctx.ParamInt("rl")
 // 	if err != nil {
@@ -92,7 +94,7 @@ func UserExist(ctx echo.Context) error {
 // @Description
 // @Param id path int true "用户id" default(1)
 // @Router /user/chgatv/{id}[get]
-// func UserChgatv(ctx echo.Context) error {
+// func UserChgatv(ctx *gin.Context)  {
 // 	id, err := ctx.ParamInt("id")
 // 	if err != nil {
 // 		return ctx.JSON(utils.ErrIpt(`数据输入错误,请重试`, err.Error()))
@@ -110,7 +112,7 @@ func UserExist(ctx echo.Context) error {
 // @Description
 // @Param id path int true "用户id" default(1)
 // @Router /user/reset/pass/{id}[get]
-// func UserResetPass(ctx echo.Context) error {
+// func UserResetPass(ctx *gin.Context)  {
 // 	id, err := ctx.ParamInt("id")
 // 	if err != nil {
 // 		return ctx.JSON(utils.ErrIpt(`数据输入错误,请重试`, err.Error()))
@@ -123,18 +125,20 @@ func UserExist(ctx echo.Context) error {
 // }
 
 // UserEdit doc
-func UserEdit(ctx echo.Context) error {
+func UserEdit(ctx *gin.Context)  {
 	ipt := &struct {
 		model.User
 		Roles []uint32 `json:"roles" form:"roles"`
 	}{}
 	err := ctx.Bind(ipt)
 	if err != nil {
-		return ctx.JSON(utils.ErrIpt(`数据输入错误,请重试`, err.Error()))
+		 ctx.JSON(utils.ErrIpt(`数据输入错误,请重试`, err.Error()))
+		return
 	}
 
 	if len(ipt.Roles) == 0 {
-		return ctx.JSON(utils.ErrIpt(`请至少选择一个权限`))
+		 ctx.JSON(utils.ErrIpt(`请至少选择一个权限`))
+		return
 	}
 	role := model.UserBaseRole()
 	for idx := range ipt.Roles {
@@ -145,7 +149,8 @@ func UserEdit(ctx echo.Context) error {
 	// if !model.UserEdit(&ipt.User, auth.Role, "Name", "Phone", "Email", "Desc", "Role") {
 	// 	return ctx.JSON(utils.Fail(`用户信息修改失败`))
 	// }
-	return ctx.JSON(utils.Succ(`用户信息修改成功`))
+	 ctx.JSON(utils.Succ(`用户信息修改成功`))
+	return
 }
 
 // UserDrop doc
@@ -154,7 +159,7 @@ func UserEdit(ctx echo.Context) error {
 // @Description
 // @Param id path int true "用户id" default(1)
 // @Router /user/drop/{id} [get]
-// func UserDrop(ctx echo.Context) error {
+// func UserDrop(ctx *gin.Context)  {
 // 	id, err := ctx.ParamInt("id")
 // 	if err != nil {
 // 		return ctx.JSON(utils.ErrIpt(`数据输入错误,请重试`, err.Error()))
@@ -173,26 +178,33 @@ func UserEdit(ctx echo.Context) error {
 // @Param opass formData string true "旧密码" default('')
 // @Param npass formData string true "新密码" default('')
 // @Router /api/user/pass [post]
-func UserPass(ctx echo.Context) error {
+func UserPass(ctx *gin.Context)  {
 	ipt := struct {
 		Opass string `json:"opass" form:"opass"`
 		Npass string `json:"npass" form:"npass"`
 	}{}
 	err := ctx.Bind(&ipt)
 	if err != nil {
-		return ctx.JSON(utils.Fail(`输入数据有误`, err.Error()))
+		 ctx.JSON(utils.Fail(`输入数据有误`, err.Error()))
+		return
 	}
-	mod, has := model.UserGet(ctx.Get("uid").(int))
+	userIdS:=ctx.Query("uid")
+	userId, err := strconv.Atoi(userIdS)
+	mod, has := model.UserGet(userId)
 	if !has {
-		return ctx.JSON(utils.Fail(`输入数据有误,请重试`))
+		 ctx.JSON(utils.Fail(`输入数据有误,请重试`))
+		return
 	}
 	if mod.Pass != ipt.Opass {
-		return ctx.JSON(utils.Fail(`原始密码输入错误,请重试`))
+		 ctx.JSON(utils.Fail(`原始密码输入错误,请重试`))
+		return
 	}
 	if !model.UserPass(mod.Id, ipt.Npass) {
-		return ctx.JSON(utils.Fail(`密码修改失败`))
+		 ctx.JSON(utils.Fail(`密码修改失败`))
+		return
 	}
-	return ctx.JSON(utils.Succ(`密码修改成功`))
+	 ctx.JSON(utils.Succ(`密码修改成功`))
+	return
 }
 
 // UserEditSelf doc
@@ -205,14 +217,17 @@ func UserPass(ctx echo.Context) error {
 // @Param phone formData string true "号码" default('')
 // @Param email formData string true "邮箱" default('')
 // @Router /api/user/edit/self [post]
-func UserEditSelf(ctx echo.Context) error {
+func UserEditSelf(ctx *gin.Context)  {
 	mod := &model.User{}
 	err := ctx.Bind(mod)
 	if err != nil {
-		return ctx.JSON(utils.ErrIpt(`数据输入错误,请重试`, err.Error()))
+		 ctx.JSON(utils.ErrIpt(`数据输入错误,请重试`, err.Error()))
+		return
 	}
 	if !model.UserEdit(mod, 0, "Name", "Phone", "Email") {
-		return ctx.JSON(utils.Fail(`用户信息修改失败`))
+		 ctx.JSON(utils.Fail(`用户信息修改失败`))
+		return
 	}
-	return ctx.JSON(utils.Succ(`用户信息修改成功`))
+	 ctx.JSON(utils.Succ(`用户信息修改成功`))
+	return
 }

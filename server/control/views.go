@@ -1,20 +1,19 @@
 package control
 
 import (
-	"blog/model"
+	"ginblog/model"
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/labstack/echo/v4"
-	"github.com/zxysilent/utils"
+	"ginblog/utils"
 )
 
 // IndexView 主页面
-func IndexView(ctx echo.Context) error {
+func IndexView(ctx *gin.Context) {
 	//return ctx.HTML(200, `<html><head><meta charset="UTF-8"><title>文档</title></head><body><a href="/swagger/index.html">doc</a></body></html>`)
-	pi, _ := strconv.Atoi(ctx.FormValue("page"))
+	pi, _ := strconv.Atoi(ctx.DefaultPostForm("page", "1"))
 	if pi == 0 {
 		pi = 1
 	}
@@ -28,48 +27,54 @@ func IndexView(ctx echo.Context) error {
 	if total > (pi * ps) {
 		naver.Next = "/?page=" + strconv.Itoa(pi+1)
 	}
-	return ctx.Render(http.StatusOK, "index.html", map[string]interface{}{
+	//ctx.HTML(http.StatusOK, render.Render())
+	ctx.HTML(http.StatusOK, "index.html", map[string]interface{}{
 		"Posts": mods,
 		"Naver": naver,
 	})
 }
 
 // ArchivesView 归档
-func ArchivesView(ctx echo.Context) error {
+func ArchivesView(ctx *gin.Context) {
 	mods, err := model.PostArchive()
 	if err != nil {
-		return ctx.Redirect(302, "/")
+		ctx.Redirect(302, "/")
 	}
-	return ctx.Render(http.StatusOK, "archive.html", map[string]interface{}{
+	ctx.HTML(http.StatusOK, "archive.html", map[string]interface{}{
 		"Posts": mods,
 	})
+	return
 }
-func ArchivesJson(ctx echo.Context) error {
+func ArchivesJson(ctx *gin.Context){
 	mods, err := model.PostArchive()
 	if err != nil {
-		return ctx.JSON(utils.Fail("未查询到数据", err))
+		ctx.JSON(http.StatusBadRequest, "未查询到数据")
+		return
 	}
-	return ctx.JSON(utils.Succ("归档", mods))
+	ctx.JSON(utils.Succ("归档", mods))
+
 }
 
 // CatePostView 分类文章列表
-func CatePostView(ctx echo.Context) error {
+func CatePostView(ctx *gin.Context)  {
 	cate := ctx.Param("cate")
 	if cate == "" {
-		return ctx.Redirect(302, "/")
+		ctx.Redirect(302, "/")
+		return
 	}
 	mod, has := model.CateName(cate)
 	if !has {
-		return ctx.Redirect(302, "/")
+		ctx.Redirect(302, "/")
 	}
-	pi, _ := strconv.Atoi(ctx.FormValue("page"))
+	pi, _ := strconv.Atoi(ctx.DefaultPostForm("page",  "1"))
 	if pi == 0 {
 		pi = 1
 	}
 	ps, _ := atoi(model.MapOpts.MustGet("page_size"), 6)
 	mods, err := model.CatePostList(mod.Id, pi, ps, true)
 	if err != nil || len(mods) < 1 {
-		return ctx.Redirect(302, "/")
+		ctx.Redirect(302, "/")
+		return
 	}
 	total := model.CatePostCount(mod.Id, true)
 	naver := model.Naver{}
@@ -79,7 +84,7 @@ func CatePostView(ctx echo.Context) error {
 	if total > (pi * ps) {
 		naver.Next = "/cate/" + mod.Name + "?page=" + strconv.Itoa(pi+1)
 	}
-	return ctx.Render(http.StatusOK, "cate-post.html", map[string]interface{}{
+	ctx.HTML(http.StatusOK, "cate-post.html", map[string]interface{}{
 		"Cate":      mod,
 		"CatePosts": mods,
 		"Naver":     naver,
@@ -87,41 +92,47 @@ func CatePostView(ctx echo.Context) error {
 }
 
 // TagsView 标签列表
-func TagsView(ctx echo.Context) error {
+func TagsView(ctx *gin.Context) {
 	mods, err := model.TagStateAll()
 	if err != nil {
-		return ctx.Redirect(302, "/")
+		ctx.Redirect(302, "/")
+		return
 	}
-	return ctx.Render(http.StatusOK, "tags.html", map[string]interface{}{
+	ctx.HTML(http.StatusOK, "tags.html", map[string]interface{}{
 		"Tags": mods,
 	})
 }
-func TagsJson(ctx echo.Context) error {
+func TagsJson(ctx *gin.Context) {
 	mods, err := model.TagStateAll()
 	if err != nil {
-		return ctx.JSON(utils.Fail("未查询到标签", err))
+		ctx.JSON(utils.Fail("未查询到标签", err))
+		return
 	}
-	return ctx.JSON(utils.Succ("标签", mods))
+	ctx.JSON(utils.Succ("标签", mods))
+	return
 }
 
 // TagPostView 标签文章列表
-func TagPostView(ctx echo.Context) error {
+func TagPostView(ctx *gin.Context) {
 	tag := ctx.Param("tag")
 	if tag == "" {
-		return ctx.Redirect(302, "/tags")
+		ctx.Redirect(302, "/tags")
+		return
 	}
 	mod, has := model.TagName(tag)
 	if !has {
-		return ctx.Redirect(302, "/tags")
+		ctx.Redirect(302, "/tags")
+		return
 	}
-	pi, _ := strconv.Atoi(ctx.FormValue("page"))
+	pi, _ := strconv.Atoi(ctx.DefaultPostForm("page", "1"))
 	if pi == 0 {
 		pi = 1
 	}
 	ps, _ := atoi(model.MapOpts.MustGet("page_size"), 6)
 	mods, err := model.TagPostList(mod.Id, pi, ps)
 	if err != nil || len(mods) < 1 {
-		return ctx.Redirect(302, "/tags")
+		ctx.Redirect(302, "/tags")
+		return
 	}
 	total := model.TagPostCount(mod.Id)
 	naver := model.Naver{}
@@ -131,7 +142,7 @@ func TagPostView(ctx echo.Context) error {
 	if total > (pi * ps) {
 		naver.Next = "/tag/" + mod.Name + "?page=" + strconv.Itoa(pi+1)
 	}
-	return ctx.Render(http.StatusOK, "tag-post.html", map[string]interface{}{
+	ctx.HTML(http.StatusOK, "tag-post.html", map[string]interface{}{
 		"Tag":      mod,
 		"TagPosts": mods,
 		"Naver":    naver,
@@ -139,18 +150,19 @@ func TagPostView(ctx echo.Context) error {
 }
 
 // PostView 文章页面
-func PostView(ctx echo.Context) error {
+func PostView(ctx *gin.Context) {
 	//return ctx.HTML(200, `<html><head><meta charset="UTF-8"><title>文档</title></head><body><a href="/swagger/index.html">doc</a></body></html>`)
 	paths := strings.Split(ctx.Param("*"), ".")
 	if len(paths) == 2 {
 		mod, naver, has := model.PostPath(paths[0])
 		if !has {
-			return ctx.Redirect(302, "/")
+			ctx.Redirect(302, "/")
+			return
 		}
 		if paths[1] == "html" {
 			mod.Content = reg.ReplaceAllString(mod.Content, `<img class="lazy-load" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-src="$1" alt="$2">`)
 			tags, _ := model.PostTags(mod.Id)
-			return ctx.Render(http.StatusOK, "post.html", map[string]interface{}{
+			ctx.HTML(http.StatusOK, "post.html", map[string]interface{}{
 				"Post":    mod,
 				"Naver":   naver,
 				"Tags":    tags,
@@ -158,9 +170,11 @@ func PostView(ctx echo.Context) error {
 				"HasCate": mod.Cate != nil,
 			})
 		}
-		return ctx.JSON(utils.Succ("", mod))
+		ctx.JSON(utils.Succ("", mod))
+		return
 	}
-	return ctx.Redirect(302, "/404")
+	ctx.Redirect(302, "/404")
+	return
 }
 
 var reg = regexp.MustCompile(`<img src="([^" ]+)" alt="([^" ]*)"\s?\/?>`)
